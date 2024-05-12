@@ -11,5 +11,8 @@
     "url": "https://github.com/mnajibi/fragments"
   },
   "author": "Maryam Najibi",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "prettier": "3.2.5"
+  }
 }
