@@ -12,6 +12,8 @@ if (options.level === 'debug') {
       colorize: true,
     },
   };
+
+ 
 }
 
 // Create and export a Pino Logger instance:
