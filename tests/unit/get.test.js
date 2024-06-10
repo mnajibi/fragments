@@ -3,14 +3,26 @@
 const request = require('supertest');
 
 const app = require('../../src/app');
+let server;
 
+beforeAll(() => {
+  server = app.listen();
+});
+
+afterAll((done) => {
+  server.close(done);
+});
 describe('GET /v1/fragments', () => {
   // If the request is missing the Authorization header, it should be forbidden
-  test('unauthenticated requests are denied', () => request(app).get('/v1/fragments').expect(401));
+  test('unauthenticated requests are denied', () =>
+    request(server).get('/v1/fragments').expect(401));
 
   // If the wrong username/password pair are used (no such user), it should be forbidden
   test('incorrect credentials are denied', () =>
-    request(app).get('/v1/fragments').auth('invalid@email.com', 'incorrect_password').expect(401));
+    request(server)
+      .get('/v1/fragments')
+      .auth('invalid@email.com', 'incorrect_password')
+      .expect(401));
 
   // Using a valid username/password pair should give a success result with a .fragments array
   test('authenticated users get a fragments array', async () => {
@@ -23,18 +35,18 @@ describe('GET /v1/fragments', () => {
   describe('GET /v1/fragments/:id', () => {
     // if the request is missing the Authorization header, it should be forbidden
     test('unauthenticated requests are denied', () => {
-      request(app).get('/v1/fragments/hi').expect(401);
+      request(server).get('/v1/fragments/hi').expect(401);
     });
     // if wrong username and password pair used, should be forbidden
     test('incorrect credentials are denied', () => {
-      request(app)
+      request(server)
         .get('/v1/fragments/hi')
         .auth('invalid@email.com', 'incorrect_password')
         .expect(401);
     });
 
     test('using non-existent id would return 404', async () => {
-      const res = await request(app)
+      const res = await request(server)
         .get('/v1/fragments/non-existent-id')
         .auth('user1@email.com', 'password1');
 
@@ -42,7 +54,7 @@ describe('GET /v1/fragments', () => {
     });
 
     test('using existing id would return fragment', async () => {
-      const post_res = await request(app)
+      const post_res = await request(server)
         .post('/v1/fragments')
         .send('some text')
         .set('Content-Type', 'text/plain')
@@ -50,7 +62,7 @@ describe('GET /v1/fragments', () => {
 
       const { fragment } = post_res.body;
 
-      const res = await request(app)
+      const res = await request(server)
         .get(`/v1/fragments/${fragment.id}`)
         .auth('user1@email.com', 'password1');
 
