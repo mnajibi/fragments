@@ -1,43 +1,52 @@
-# Use node version 20.13.1
-FROM node:20.13.1
+# Stage 1: Dependencies
+FROM node:20.13.0@sha256:a6385a6bb2fdcb7c48fc871e35e32af8daaa82c518900be49b76d10c005864c2 AS dependencies
 
 LABEL maintainer="Maryam Najibi <snajibi@myseneca.ca>"
 LABEL description="Fragments node.js microservice"
 
-# We default to use port 8080 in our service
-ENV PORT=8080
+# Use /app as our working directory
+WORKDIR /app
 
-# Reduce npm spam when installing within Docker
-# https://docs.npmjs.com/cli/v8/using-npm/config#loglevel
+# Set environment variables for production
+ENV NODE_ENV=production
 ENV NPM_CONFIG_LOGLEVEL=warn
-
-# Disable colour when run inside Docker
-# https://docs.npmjs.com/cli/v8/using-npm/config#color
 ENV NPM_CONFIG_COLOR=false
+
+# Copy the package.json and package-lock.json files to the current working directory
+COPY package*.json ./
+
+# Install production dependencies
+RUN npm ci --only=production
+
+# Stage 2: Application
+FROM node:20.13.0@sha256:a6385a6bb2fdcb7c48fc871e35e32af8daaa82c518900be49b76d10c005864c2 AS app
+
+LABEL maintainer="Maryam Najibi <snajibi@myseneca.ca>"
+LABEL description="Fragments node.js microservice"
 
 # Use /app as our working directory
 WORKDIR /app
 
-#Copy the package*.json file to current repo which is /app
-COPY package*.json ./
+# Copy application source code
+COPY --chown=node:node src/ src/
+COPY --chown=node:node ./tests/.htpasswd ./tests/.htpasswd
 
-# Install node dependencies defined in package-lock.json
-RUN npm install
+# Copy the dependencies from the previous stage
+COPY --chown=node:node --from=dependencies /app/node_modules ./node_modules
+COPY --chown=node:node --from=dependencies /app/package*.json ./
 
-# Copy src to /app/src/
-COPY ./src ./src
+# Set the user to 'node' to avoid running as root
+USER node
 
-# Start the container by running our server
-CMD npm start
+# Define the default port
+ENV PORT=8080
 
-# We run our service on port 8080
-EXPOSE 8080
+# Healthcheck to ensure the application is running
+HEALTHCHECK --interval=15s --timeout=30s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:${PORT} || exit 1
 
-# Copy src/
-COPY ./src ./src
+# Expose the port
+EXPOSE ${PORT}
 
-# Copy our HTPASSWD file
-COPY ./tests/.htpasswd ./tests/.htpasswd
-
-# Run the server
-CMD npm start
+# Start the application
+CMD ["npm", "start"]
