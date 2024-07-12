@@ -3,6 +3,7 @@
 const request = require('supertest');
 
 const app = require('../../src/app');
+const Fragment = require('../../src/model');
 
 describe('GET /v1/fragments', () => {
   // If the request is missing the Authorization header, it should be forbidden
@@ -163,7 +164,7 @@ describe('GET /v1/fragments/:id/info', () => {
   // if wrong username and password pair used, should be forbidden
   test('incorrect credentials are denied', async () => {
     const res = await request(app)
-      .get('/v1/fragments/hi/info/info')
+      .get('/v1/fragments/hi/info')
       .auth('invalid@email.com', 'incorrect_password');
 
     expect(res.statusCode).toBe(401);
@@ -171,10 +172,22 @@ describe('GET /v1/fragments/:id/info', () => {
 
   test('using non-existent id would return 404', async () => {
     const res = await request(app)
-      .get('/v1/fragments/non-existent-id')
+      .get('/v1/fragments/non-existent-id/info')
       .auth('user1@email.com', 'password1');
 
     expect(res.statusCode).toBe(404);
+  });
+
+  test('error other than 404 would return 500', async () => {
+    // Mock Fragment.byId to throw an error (other than 404)
+    jest.spyOn(Fragment, 'byId').mockRejectedValueOnce(new Error('Some internal error'));
+
+    const res = await request(app)
+      .get('/v1/fragments/some-id')
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error.message).toBe('Some internal error');
   });
 
   test('text/plain: using existing id would return fragment', async () => {
@@ -271,5 +284,23 @@ describe('GET /v1/fragments/:id.ext', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.get('Content-Type').includes('text/html')).toBe(true);
+  });
+
+  test('convert text/markdown to text/ext should throw error', async () => {
+    const markdown = '# How to run this tool';
+
+    const post_res = await request(app)
+      .post('/v1/fragments')
+      .send(markdown)
+      .set('Content-Type', 'text/markdown')
+      .auth('user1@email.com', 'password1');
+
+    const { id: fragment_id } = post_res.body.fragment;
+
+    const res = await request(app)
+      .get(`/v1/fragments/${fragment_id}.ext`)
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(500);
   });
 });

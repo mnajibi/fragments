@@ -164,27 +164,22 @@ class Fragment {
    * @returns
    */
   convertBuffer(to_mime_type, extension, buffer) {
-    try {
-      const is_convertible = VALID_CONVERSION_EXTENSIONS[to_mime_type].includes(extension);
-      if (!is_convertible) {
-        throw new Error(`Can't convert "${this.type}" to "${this.to_mime_type}`);
-      }
-
-      let result = null;
-      const md = new MarkdownIt();
-      switch (this.type) {
-        case TYPES.TEXT_MARKDOWN:
-          if (to_mime_type === TYPES.TEXT_HTML) {
-            result = md.render(buffer.toString());
-            break;
-          }
-      }
-      logger.info(`Converted fragment ${this.id}'s data "${this.type}" to "${this.to_mime_type}`);
-      return result;
-    } catch (error) {
-      logger.error(`Error converting fragment ${this.id}'s data: ${error.message}`);
-      throw error;
+    const is_convertible = VALID_CONVERSION_EXTENSIONS[to_mime_type].includes(extension);
+    if (!is_convertible) {
+      throw new Error(`Can't convert "${this.type}" to "${this.to_mime_type}`);
     }
+
+    let result = null;
+    const md = new MarkdownIt();
+    switch (this.type) {
+      case TYPES.TEXT_MARKDOWN:
+        if (to_mime_type === TYPES.TEXT_HTML) {
+          result = md.render(buffer.toString());
+          break;
+        }
+    }
+    logger.info(`Converted fragment ${this.id}'s data "${this.type}" to "${this.to_mime_type}`);
+    return result;
   }
 }
 
