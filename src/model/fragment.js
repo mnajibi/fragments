@@ -16,7 +16,7 @@ const {
 } = require('./data');
 
 const logger = require('../logger');
-const { SUPPORTED_TYPES, TYPES } = require('../constants');
+const { SUPPORTED_TYPES, TYPES, VALID_CONVERSION_EXTENSIONS } = require('../constants');
 
 class Fragment {
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
