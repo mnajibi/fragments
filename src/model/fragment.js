@@ -140,7 +140,7 @@ class Fragment {
    * @returns {Array<string>} list of supported mime types
    */
   get formats() {
-    return supported_types;
+    return SUPPORTED_TYPES;
   }
 
   /**
@@ -149,7 +149,7 @@ class Fragment {
    * @returns {boolean} true if we support this Content-Type (i.e., type/subtype)
    */
   static isSupportedType(value) {
-    return supported_types.find((type) => value.includes(type)) ? true : false;
+    return SUPPORTED_TYPES.find((type) => value.includes(type)) ? true : false;
   }
 
   static convertFromBuffer(type, buffer) {
