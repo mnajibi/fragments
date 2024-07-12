@@ -151,6 +151,16 @@ class Fragment {
   static isSupportedType(value) {
     return supported_types.find((type) => value.includes(type)) ? true : false;
   }
+
+  static convertFromBuffer(type, buffer) {
+    let result = null;
+    switch (type) {
+      case 'text/plain':
+        result = buffer.toString();
+    }
+
+    return result;
+  }
 }
 
 module.exports.Fragment = Fragment;

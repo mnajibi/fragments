@@ -10,9 +10,9 @@ module.exports.get = async (req, res) => {
 
   try {
     const fragments = expand
-      ? await Fragment.byUser(req.user, expand)
+      ? await Fragment.byUser(req.user, true)
       : await Fragment.byUser(req.user);
-    res.status(200).json(createSuccessResponse({ fragments }));
+    res.status(200).json(createSuccessResponse({ fragments: fragments }));
   } catch (err) {
     logger.error({ err }, 'Error getting fragments');
     res.status(500).json(createErrorResponse(500, err));

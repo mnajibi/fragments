@@ -8,7 +8,7 @@ const contentType = require('content-type');
 const Fragment = require('../../model');
 
 // Import the necessary handlers
-const { get, getById } = require('./get'); // Correctly import get and getById
+const { get, getById, getInfoById } = require('./get'); // Correctly import get and getById
 const post = require('./post'); // Ensure post is imported
 
 // Create a router on which to mount our API endpoints
@@ -17,6 +17,7 @@ const router = express.Router();
 // Define our routes
 router.get('/fragments', get);
 router.get('/fragments/:id', getById);
+router.get('/fragments/:id/info', getInfoById);
 // Other routes (POST, DELETE, etc.) will go here later on...
 
 // Support sending various Content-Types on the body up to 5M in size
