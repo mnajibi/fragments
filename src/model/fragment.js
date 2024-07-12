@@ -15,7 +15,7 @@ const {
 } = require('./data');
 
 const logger = require('../logger');
-const supported_types = ['text/plain'];
+const { SUPPORTED_TYPES, TYPES } = require('../constants');
 
 class Fragment {
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
@@ -72,7 +72,7 @@ class Fragment {
       throw error;
     }
 
-    return fragment;
+    return new Fragment(fragment);
   }
 
   /**
@@ -155,8 +155,12 @@ class Fragment {
   static convertFromBuffer(type, buffer) {
     let result = null;
     switch (type) {
-      case 'text/plain':
+      case TYPES.TEXT_PLAIN:
         result = buffer.toString();
+        break;
+      case TYPES.APPLICATION_JSON:
+        result = JSON.stringify(JSON.parse(buffer.toString()));
+        break;
     }
 
     return result;

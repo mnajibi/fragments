@@ -27,7 +27,6 @@ describe('GET /v1/fragments', () => {
       .send('some text')
       .set('Content-Type', 'text/plain')
       .auth('user1@email.com', 'password1');
-    console.log('==== Hello POST');
 
     const res = await request(app)
       .get('/v1/fragments?expand=1')
@@ -95,7 +94,7 @@ describe('GET /v1/fragments/:id', () => {
     expect(res.statusCode).toBe(404);
   });
 
-  test('using existing id would return fragment', async () => {
+  test('using existing id would return fragment data', async () => {
     const post_res = await request(app)
       .post('/v1/fragments')
       .send('some text')
@@ -138,7 +137,7 @@ describe('GET /v1/fragments/:id/info', () => {
     expect(res.statusCode).toBe(404);
   });
 
-  test('using existing id would return fragment', async () => {
+  test('text/plain: using existing id would return fragment', async () => {
     const post_res = await request(app)
       .post('/v1/fragments')
       .send('some text')
@@ -153,5 +152,23 @@ describe('GET /v1/fragments/:id/info', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.fragment).toEqual(fragment);
+  });
+
+  test('application/json: using existing id would return fragment', async () => {
+    const post_obj = { fragments: 'hello' };
+    const post_res = await request(app)
+      .post('/v1/fragments')
+      .send(post_obj)
+      .set('Content-Type', 'application/json')
+      .auth('user1@email.com', 'password1');
+
+    const { fragment } = post_res.body;
+
+    const res = await request(app)
+      .get(`/v1/fragments/${fragment.id}`)
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body.data)).toEqual(post_obj);
   });
 });

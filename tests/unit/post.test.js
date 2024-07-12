@@ -21,7 +21,7 @@ describe('POST /v1/fragments', () => {
     expect(res.statusCode).not.toBe(401);
   });
 
-  test('responses include all necessary and expected properties: id, created, type, updated, ownerId', async () => {
+  test('successful responses include all necessary and expected properties: id, created, type, updated, ownerId', async () => {
     const res = await request(app)
       .post('/v1/fragments')
       .send('text')
@@ -45,7 +45,7 @@ describe('POST /v1/fragments', () => {
     );
   });
 
-  test('successful response should have correct Location header', async () => {
+  test('text/plain: successful response should have correct Location header', async () => {
     const res = await request(app)
       .post('/v1/fragments')
       .send('text')
@@ -64,5 +64,17 @@ describe('POST /v1/fragments', () => {
 
     expect(res.body.error.code).toBe(415);
     expect(res.body.error.message).toBe('unsupported/type is not supported');
+  });
+
+  test('application/json: Successful response should have correct Location header', async () => {
+    const post_res = await request(app)
+      .post('/v1/fragments')
+      .send({ fragments: 'hello users' })
+      .set('Content-Type', 'application/json')
+      .auth('user1@email.com', 'password1');
+
+    expect(post_res.get('Location')).toBe(
+      `${process.env.API_URL}/v1/fragments/${post_res.body.fragment.id}`
+    );
   });
 });

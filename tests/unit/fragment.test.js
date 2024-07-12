@@ -1,4 +1,5 @@
 const { Fragment } = require('../../src/model/fragment');
+const { SUPPORTED_TYPES } = require('../../src/constants');
 
 // Wait for a certain number of ms. Feel free to change this value
 // if it isn't long enough for your test runs. Returns a Promise.
@@ -166,7 +167,7 @@ describe('Fragment class', () => {
         type: 'text/plain; charset=utf-8',
         size: 0,
       });
-      expect(fragment.formats).toEqual(['text/plain']);
+      expect(fragment.formats).toEqual(SUPPORTED_TYPES);
     });
   });
 
