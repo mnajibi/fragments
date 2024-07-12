@@ -3,6 +3,7 @@
 const { randomUUID } = require('crypto');
 // Use https://www.npmjs.com/package/content-type to create/parse Content-Type headers
 const contentType = require('content-type');
+const MarkdownIt = require('markdown-it');
 
 // Functions for working with fragment metadata/data using our DB
 const {
@@ -152,18 +153,38 @@ class Fragment {
     return SUPPORTED_TYPES.find((type) => value.includes(type)) ? true : false;
   }
 
-  static convertFromBuffer(type, buffer) {
-    let result = null;
-    switch (type) {
-      case TYPES.TEXT_PLAIN:
-        result = buffer.toString();
-        break;
-      case TYPES.APPLICATION_JSON:
-        result = JSON.stringify(JSON.parse(buffer.toString()));
-        break;
-    }
+  /**
+   * Convert buffer from its type to "to_mime_type" parameter
+   * - get fragment's "buffer type"
+   * - check if it can be converted to "target type"
+   * - convert
+   * @param {string} to_mime_type
+   * @param {string} extension
+   * @param {Buffer} buffer
+   * @returns
+   */
+  convertBuffer(to_mime_type, extension, buffer) {
+    try {
+      const is_convertible = VALID_CONVERSION_EXTENSIONS[to_mime_type].includes(extension);
+      if (!is_convertible) {
+        throw new Error(`Can't convert "${this.type}" to "${this.to_mime_type}`);
+      }
 
-    return result;
+      let result = null;
+      const md = new MarkdownIt();
+      switch (this.type) {
+        case TYPES.TEXT_MARKDOWN:
+          if (to_mime_type === TYPES.TEXT_HTML) {
+            result = md.render(buffer.toString());
+            break;
+          }
+      }
+      logger.info(`Converted fragment ${this.id}'s data "${this.type}" to "${this.to_mime_type}`);
+      return result;
+    } catch (error) {
+      logger.error(`Error converting fragment ${this.id}'s data: ${error.message}`);
+      throw error;
+    }
   }
 }
 

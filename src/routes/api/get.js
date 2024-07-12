@@ -1,7 +1,9 @@
 // src/routes/api/get.js
+const path = require('path');
 const logger = require('../../logger');
 const Fragment = require('../../model');
 const { createSuccessResponse, createErrorResponse } = require('../../response');
+const mime = require('mime-types');
 /**
  * Get a list of fragments for the current user
  */
@@ -20,14 +22,25 @@ module.exports.get = async (req, res) => {
 };
 
 module.exports.getById = async (req, res) => {
-  const id = req.params.id;
+  const { name: id, ext } = path.parse(req.params.id);
   const ownerId = req.user;
+
+  // get mime type from id.ext
+  const mime_type = mime.lookup(ext);
 
   try {
     const fragment = await Fragment.byId(ownerId, id);
     const fragmentData = await fragment.getData();
-    const convertedData = Fragment.convertFromBuffer('text/plain', fragmentData);
-    res.status(200).json(createSuccessResponse({ data: convertedData }));
+
+    if (ext && mime_type) {
+      const convertedData = fragment.convertBuffer(mime_type, ext, fragmentData);
+      res.setHeader('Content-Type', mime_type);
+      res.status(200).send(convertedData);
+    } else {
+      logger.info(`Got fragment ${fragment.id}'s data, no conversion needed`);
+      res.setHeader('Content-Type', fragment.mimeType);
+      res.status(200).send(fragmentData);
+    }
   } catch (err) {
     logger.error({ err }, `Error getting fragment with id ${id}`);
     if (err.code === 404) {

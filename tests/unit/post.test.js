@@ -66,15 +66,60 @@ describe('POST /v1/fragments', () => {
     expect(res.body.error.message).toBe('unsupported/type is not supported');
   });
 
+  test('should be able to create text/plain fragment', async () => {
+    const res = await request(app)
+      .post('/v1/fragments')
+      .send('text')
+      .set('Content-Type', 'text/plain')
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(201);
+    expect(res.get('Location')).toBe(`${process.env.API_URL}/v1/fragments/${res.body.fragment.id}`);
+  });
+
+  test('should be able to create text/html fragment', async () => {
+    const res = await request(app)
+      .post('/v1/fragments')
+      .send('<h2>This is a fragment<h2>')
+      .set('Content-Type', 'text/html')
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(201);
+    expect(res.get('Location')).toBe(`${process.env.API_URL}/v1/fragments/${res.body.fragment.id}`);
+  });
+
+  test('should be able to create text/markdown fragment', async () => {
+    const res = await request(app)
+      .post('/v1/fragments')
+      .send('# This is a fragment')
+      .set('Content-Type', 'text/markdown')
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(201);
+    expect(res.get('Location')).toBe(`${process.env.API_URL}/v1/fragments/${res.body.fragment.id}`);
+  });
+
   test('application/json: Successful response should have correct Location header', async () => {
-    const post_res = await request(app)
+    const res = await request(app)
       .post('/v1/fragments')
       .send({ fragments: 'hello users' })
       .set('Content-Type', 'application/json')
       .auth('user1@email.com', 'password1');
 
-    expect(post_res.get('Location')).toBe(
-      `${process.env.API_URL}/v1/fragments/${post_res.body.fragment.id}`
-    );
+    expect(res.statusCode).toBe(201);
+    expect(res.get('Location')).toBe(`${process.env.API_URL}/v1/fragments/${res.body.fragment.id}`);
+  });
+
+  test('should be able to create text/markdown fragment', async () => {
+    const md = `# How to run this tool`;
+
+    const res = await request(app)
+      .post('/v1/fragments')
+      .send(md)
+      .set('Content-Type', 'text/markdown')
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(201);
+    expect(res.get('Location')).toBe(`${process.env.API_URL}/v1/fragments/${res.body.fragment.id}`);
   });
 });
