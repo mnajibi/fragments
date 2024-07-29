@@ -99,7 +99,7 @@ jobs:
             AWS_COGNITO_CLIENT_ID=7483516dfd2iehkojd5634rs1i
             AWS_S3_BUCKET=mnajibi-fragments
 
-       - name: Deploy Amazon ECS task definition
+      - name: Deploy Amazon ECS task definition
          uses: aws-actions/amazon-ecs-deploy-task-definition@v1
          with:
           task-definition: ${{ steps.update-task-def.outputs.task-definition }}
