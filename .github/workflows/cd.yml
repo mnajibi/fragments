@@ -94,7 +94,7 @@ jobs:
             LOG_LEVEL=debug
             NODE_ENV=production
             API_URL=http://fragments-lb-1690266520.us-east-1.elb.amazonaws.com
-            PORT=8080
+            PORT=80
             AWS_COGNITO_POOL_ID=us-east-1_rVRWC9fJa
             AWS_COGNITO_CLIENT_ID=7483516dfd2iehkojd5634rs1i
             AWS_S3_BUCKET=mnajibi-fragments
