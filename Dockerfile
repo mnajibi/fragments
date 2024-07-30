@@ -35,11 +35,9 @@ COPY --chown=node:node ./tests/.htpasswd ./tests/.htpasswd
 COPY --chown=node:node --from=dependencies /app/node_modules ./node_modules
 COPY --chown=node:node --from=dependencies /app/package*.json ./
 
-# Set the user to 'node' to avoid running as root
-USER node
 
 # Define the default port
-ENV PORT=8080
+ENV PORT=80
 
 # Healthcheck to ensure the application is running
 HEALTHCHECK --interval=15s --timeout=30s --start-period=5s --retries=3 \
