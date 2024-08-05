@@ -20,9 +20,6 @@ router.get('/fragments/:id', getById);
 router.get('/fragments/:id/info', getInfoById);
 // Other routes (POST, DELETE, etc.) will go here later on...
 
-POST;
-const post = require('./post');
-
 // Support sending various Content-Types on the body up to 5M in size
 const rawBody = () =>
   express.raw({
