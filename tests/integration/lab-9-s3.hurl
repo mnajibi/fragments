@@ -1,5 +1,5 @@
 ################### POST TEST ###################
-POST http://localhost:8080/v1/fragments
+POST http://0.0.0.0:80/v1/fragments
 Content-Type: text/plain; charset=utf-8
 # Include HTTP Basic Auth credentials
 [BasicAuth]
@@ -23,7 +23,7 @@ Content-Type: text/plain
 body == "Hello S3!"
 
 #3. Delete
-DELETE http://localhost:8080/v1/fragments/{{fragment_id}}
+DELETE http://localhost:80/v1/fragments/{{fragment_id}}
 [BasicAuth]
 user1@email.com:password1
 

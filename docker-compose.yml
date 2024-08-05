@@ -11,7 +11,7 @@ services:
     # Environment variables to use
     environment:
       # Our API will be running on http://localhost:8080
-      - API_URL=http://localhost:8080
+      - API_URL=http://localhost:80
       # Use Basic Auth (for running tests, CI)
       - HTPASSWD_FILE=tests/.htpasswd
       # Use the LOG_LEVEL set in the host environment, or default to info
@@ -34,7 +34,7 @@ services:
 
     # Ports to publish
     ports:
-      - '8080:8080'
+      - '80:80'
 
   # DynamoDB Local, see: https://hub.docker.com/r/amazon/dynamodb-local
   dynamodb-local:
