@@ -1,4 +1,4 @@
-POST http://localhost:80/v1/fragments
+POST http://localhost:8080/v1/fragments
 Content-Type: application/json
 # Include HTTP Basic Auth credentials
 [BasicAuth]
@@ -29,7 +29,7 @@ jsonpath "$.fragment.type" == "application/json"
 jsonpath "$.fragment.size" == 29
 
 # 3. Post a markdown fragment
-POST http://localhost:80/v1/fragments
+POST http://localhost:8080/v1/fragments
 Content-Type: text/markdown
 # Include HTTP Basic Auth credentials
 [BasicAuth]
@@ -58,7 +58,7 @@ jsonpath "$.fragment.type" == "text/markdown"
 jsonpath "$.fragment.size" == 21
 
 # 6. Get all fragments
-GET http://localhost:80/v1/fragments
+GET http://localhost:8080/v1/fragments
 # Include HTTP Basic Auth credentials
 [BasicAuth]
 user1@email.com:password1
@@ -85,7 +85,7 @@ user1@email.com:password1
 HTTP/1.1 404
 
 # 9. Get all fragments
-GET http://localhost:80/v1/fragments
+GET http://localhost:8080/v1/fragments
 # Include HTTP Basic Auth credentials
 [BasicAuth]
 user1@email.com:password1
