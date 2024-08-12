@@ -49,7 +49,7 @@ module.exports.getById = async (req, res) => {
     const fragmentData = await fragment.getData();
 
     if (ext && mime_type) {
-      const convertedData = fragment.convertBuffer(ext, fragmentData);
+      const convertedData = await fragment.convertBuffer(ext, fragmentData);
       res.setHeader('Content-Type', mime_type);
       return res.status(200).send(convertedData);
     }

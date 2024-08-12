@@ -12,6 +12,7 @@ module.exports.TYPES = this.TYPES;
 
 module.exports.VALID_CONVERSION_EXTENSIONS = {
   'text/markdown': ['.md', '.html', '.txt'],
+  'text/plain': ['.txt'],
   'text/html': ['.html', '.txt'],
   'application/json': ['.json', '.txt'],
   'image/png': ['.png', '.jpg', '.webp', '.gif'],

@@ -158,7 +158,7 @@ class Fragment {
    * @param {Buffer} buffer
    * @returns
    */
-  convertBuffer(extension, buffer) {
+  async convertBuffer(extension, buffer) {
     const is_convertible = VALID_CONVERSION_EXTENSIONS[this.mimeType].includes(extension);
     if (!is_convertible) {
       const error = new Error(`Can't convert "${this.type}" to "${extension}`);
@@ -202,7 +202,7 @@ class Fragment {
 
       default:
         if (this.type.includes('image/')) {
-          result = convertImage(buffer, extension);
+          result = await convertImage(buffer, extension);
           break;
         }
         break;
@@ -213,6 +213,7 @@ class Fragment {
 }
 
 const convertImage = async (buffer, extension) => {
+  logger.debug(extension.substring(1));
   try {
     const convertedImage = await sharp(buffer).toFormat(extension.substring(1)).toBuffer();
     return convertedImage;

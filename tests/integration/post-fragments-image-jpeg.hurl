@@ -25,7 +25,7 @@ GET {{url}}.gif
 user1@email.com:password1
 
 HTTP/1.1 200
-Content-Type: image/gif; charset=utf-8
+Content-Type: image/gif
 
 ####### GET .jpg #######
 
@@ -44,7 +44,7 @@ GET {{url}}.webp
 user1@email.com:password1
 
 HTTP/1.1 200
-Content-Type: image/webp; charset=utf-8
+Content-Type: image/webp
 
 ####### GET .png #######
 
@@ -53,4 +53,4 @@ GET {{url}}.png
 user1@email.com:password1
 
 HTTP/1.1 200
-Content-Type: image/png; charset=utf-8
+Content-Type: image/png
