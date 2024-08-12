@@ -3,6 +3,7 @@
 const { randomUUID } = require('crypto');
 // Use https://www.npmjs.com/package/content-type to create/parse Content-Type headers
 const contentType = require('content-type');
+const mime = require('mime-types');
 const MarkdownIt = require('markdown-it');
 
 // Functions for working with fragment metadata/data using our DB
@@ -16,7 +17,8 @@ const {
 } = require('./data');
 
 const logger = require('../logger');
-const { SUPPORTED_TYPES, TYPES, VALID_CONVERSION_EXTENSIONS } = require('../constants');
+const { SUPPORTED_TYPES, TYPES, VALID_CONVERSION_EXTENSIONS, EXTENSIONS } = require('../constants');
+const sharp = require('sharp');
 
 class Fragment {
   constructor({ id, ownerId, created, updated, type, size = 0 }) {
@@ -154,33 +156,74 @@ class Fragment {
   }
 
   /**
-   * Convert buffer from its type to "to_mime_type" parameter
+   * Convert buffer from its type to "extension" parameter
    * - get fragment's "buffer type"
-   * - check if it can be converted to "target type"
+   * - check if it can be converted to "target extension"
    * - convert
-   * @param {string} to_mime_type
    * @param {string} extension
    * @param {Buffer} buffer
    * @returns
    */
-  convertBuffer(to_mime_type, extension, buffer) {
-    const is_convertible = VALID_CONVERSION_EXTENSIONS[to_mime_type].includes(extension);
+  convertBuffer(extension, buffer) {
+    const is_convertible = VALID_CONVERSION_EXTENSIONS[this.mimeType].includes(extension);
     if (!is_convertible) {
       throw new Error(`Can't convert "${this.type}" to "${this.to_mime_type}`);
     }
 
-    let result = null;
+    // same type no need to convert
+    if (mime.lookup(extension) === this.mimeType) {
+      logger.debug(mime.lookup(extension), this.mimeType);
+      logger.info(`Requesting same ${this.mimeType}, no conversion needed`);
+      return buffer;
+    }
+
+    let result = buffer;
     const md = new MarkdownIt();
     switch (this.type) {
       case TYPES.TEXT_MARKDOWN:
-        if (to_mime_type === TYPES.TEXT_HTML) {
+        if (extension === EXTENSIONS.HTML) {
           result = md.render(buffer.toString());
           break;
         }
+        logger.debug(`Conversion not needed from ${this.type} to ${extension}, set Content-Type`);
+        break;
+
+      case TYPES.TEXT_PLAIN:
+        logger.debug(`Conversion not needed from ${this.type} to ${extension}, set Content-Type`);
+        break;
+
+      case TYPES.TEXT_HTML:
+        logger.debug(`Conversion not needed from ${this.type} to ${extension}, set Content-Type`);
+        break;
+
+      case TYPES.APPLICATION_JSON:
+        if (extension === EXTENSIONS.TXT) {
+          result = buffer.toString();
+          break;
+        }
+        logger.debug(`Conversion not needed from ${this.type} to ${extension}, set Content-Type`);
+        break;
+
+      default:
+        if (this.type.includes('image/')) {
+          result = convertImage(buffer, extension);
+          break;
+        }
+        break;
     }
     logger.info(`Converted fragment ${this.id}'s data "${this.type}" to "${this.to_mime_type}`);
     return result;
   }
 }
+
+const convertImage = async (buffer, extension) => {
+  try {
+    const convertedImage = await sharp(buffer).toFormat(extension.substring(1)).toBuffer();
+    return convertedImage;
+  } catch (err) {
+    logger.error({ err }, "Can't convert image");
+    throw new Error("Can't convert image");
+  }
+};
 
 module.exports.Fragment = Fragment;

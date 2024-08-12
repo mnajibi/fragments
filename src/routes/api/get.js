@@ -21,6 +21,14 @@ module.exports.get = async (req, res) => {
   }
 };
 
+/**
+ * GET /fragments/:id/info returns an existing fragment's metadata
+ *
+ * GET /fragments/:id.ext returns an existing fragment's data converted to a supported type.
+ *
+ * @param {*} req
+ * @param {*} res
+ */
 module.exports.getById = async (req, res) => {
   const { name: id, ext } = path.parse(req.params.id);
   const ownerId = req.user;
@@ -30,24 +38,26 @@ module.exports.getById = async (req, res) => {
 
   try {
     const fragment = await Fragment.byId(ownerId, id);
+    if (!fragment) {
+      return res.status(404).json(createErrorResponse(404, `Fragment ${id} not found`));
+    }
     const fragmentData = await fragment.getData();
 
     if (ext && mime_type) {
-      const convertedData = fragment.convertBuffer(mime_type, ext, fragmentData);
+      const convertedData = fragment.convertBuffer(ext, fragmentData);
       res.setHeader('Content-Type', mime_type);
-      res.status(200).send(convertedData);
-    } else {
-      logger.info(`Got fragment ${fragment.id}'s data, no conversion needed`);
-      res.setHeader('Content-Type', fragment.mimeType);
-      res.status(200).send(fragmentData);
+      return res.status(200).send(convertedData);
     }
+
+    logger.info(`Got fragment ${fragment.id}'s data, no conversion needed`);
+    res.setHeader('Content-Type', fragment.mimeType);
+    return res.status(200).send(fragmentData);
   } catch (err) {
     logger.error({ err }, `Error getting fragment with id ${id}`);
     if (err.code === 404) {
-      res.status(err.code).json(createErrorResponse(err.status, err.message));
-    } else {
-      res.status(500).json(createErrorResponse(500, err.message));
+      return res.status(err.code).json(createErrorResponse(err.status, err.message));
     }
+    res.status(500).json(createErrorResponse(500, err.message));
   }
 };
 

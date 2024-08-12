@@ -3,10 +3,10 @@ module.exports.TYPES = {
   TEXT_MARKDOWN: 'text/markdown',
   TEXT_HTML: 'text/html',
   APPLICATION_JSON: 'application/json',
-  // IMAGE_PNG:
-  // IMAGE_JPEG:
-  // IMAGE_WEBP:
-  // IMAGE_GIF:
+  IMAGE_PNG: 'image/png',
+  IMAGE_JPEG: 'image/jpeg',
+  IMAGE_WEBP: 'image/webp',
+  IMAGE_GIF: 'image/gif',
 };
 module.exports.TYPES = this.TYPES;
 
@@ -25,6 +25,10 @@ module.exports.SUPPORTED_TYPES = [
   this.TYPES.TEXT_HTML,
   this.TYPES.TEXT_MARKDOWN,
   this.TYPES.APPLICATION_JSON,
+  this.TYPES.IMAGE_GIF,
+  this.TYPES.IMAGE_JPEG,
+  this.TYPES.IMAGE_WEBP,
+  this.TYPES.IMAGE_PNG,
 ];
 
 module.exports.EXTENSIONS = {
@@ -32,4 +36,8 @@ module.exports.EXTENSIONS = {
   MD: '.md',
   HTML: '.html',
   JSON: '.json',
+  PNG: '.png',
+  JPG: '.jpg',
+  WEBP: '.webp',
+  GIF: '.gif',
 };

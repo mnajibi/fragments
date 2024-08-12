@@ -267,7 +267,24 @@ describe('GET /v1/fragments/:id.ext', () => {
     expect(res.statusCode).toBe(404);
   });
 
-  test('should be able to convert text/markdown to text/html using .html extension', async () => {
+  test('should be able to convert text/plain to .txt', async () => {
+    const post_res = await request(app)
+      .post('/v1/fragments')
+      .send('This is a fragment')
+      .set('Content-Type', 'text/markdown')
+      .auth('user1@email.com', 'password1');
+
+    const { id: fragment_id } = post_res.body.fragment;
+
+    const res = await request(app)
+      .get(`/v1/fragments/${fragment_id}.txt`)
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.get('Content-Type').includes('text/plain')).toBe(true);
+  });
+
+  test('should be able to convert text/markdown to .html, .md, .txt', async () => {
     const markdown = '# How to run this tool';
 
     const post_res = await request(app)
@@ -278,13 +295,27 @@ describe('GET /v1/fragments/:id.ext', () => {
 
     const { id: fragment_id } = post_res.body.fragment;
 
-    const res = await request(app)
+    const res1 = await request(app)
       .get(`/v1/fragments/${fragment_id}.html`)
       .auth('user1@email.com', 'password1');
 
-    expect(res.statusCode).toBe(200);
-    expect(res.get('Content-Type').includes('text/html')).toBe(true);
+    const res2 = await request(app)
+      .get(`/v1/fragments/${fragment_id}.md`)
+      .auth('user1@email.com', 'password1');
+
+    const res3 = await request(app)
+      .get(`/v1/fragments/${fragment_id}.txt`)
+      .auth('user1@email.com', 'password1');
+
+    expect(res1.statusCode).toBe(200);
+    expect(res1.get('Content-Type').includes('text/html')).toBe(true);
+    expect(res2.statusCode).toBe(200);
+    expect(res2.get('Content-Type').includes('text/markdown')).toBe(true);
+    expect(res3.statusCode).toBe(200);
+    expect(res3.get('Content-Type').includes('text/plain')).toBe(true);
   });
+
+  // TODO: add test cases where user requests unsupported extensions
 
   test('convert text/markdown to text/ext should throw error', async () => {
     const markdown = '# How to run this tool';
