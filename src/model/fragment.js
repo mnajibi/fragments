@@ -184,14 +184,6 @@ class Fragment {
         logger.debug(`Conversion not needed from ${this.type} to ${extension}, set Content-Type`);
         break;
 
-      case TYPES.TEXT_PLAIN:
-        logger.debug(`Conversion not needed from ${this.type} to ${extension}, set Content-Type`);
-        break;
-
-      case TYPES.TEXT_HTML:
-        logger.debug(`Conversion not needed from ${this.type} to ${extension}, set Content-Type`);
-        break;
-
       case TYPES.APPLICATION_JSON:
         if (extension === EXTENSIONS.TXT) {
           result = buffer.toString();

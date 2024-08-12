@@ -1,6 +1,8 @@
 const request = require('supertest');
 
 const app = require('../../src/app');
+const fs = require('fs');
+const path = require('path');
 
 describe('GET /v1/fragments', () => {
   // If the request is missing the Authorization header, it should be forbidden
@@ -237,7 +239,7 @@ describe('GET /v1/fragments', () => {
       expect(res.statusCode).toBe(404);
     });
 
-    test('should be able to convert text/plain to .txt', async () => {
+    test('should be able to convert text/markdown to .txt', async () => {
       const post_res = await request(app)
         .post('/v1/fragments')
         .send('This is a fragment')
@@ -270,35 +272,104 @@ describe('GET /v1/fragments', () => {
         .auth('user1@email.com', 'password1');
       expect(get_res.statusCode).toBe(400);
     });
+
+    test('should be able to convert text/markdown to .html, .md, .txt', async () => {
+      const markdown = `# How run this tool`;
+
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send(markdown)
+        .set('Content-Type', 'text/markdown')
+        .auth('user1@email.com', 'password1');
+
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const res1 = await request(app)
+        .get(`/v1/fragments/${fragment_id}.html`)
+        .auth('user1@email.com', 'password1');
+
+      const res2 = await request(app)
+        .get(`/v1/fragments/${fragment_id}.md`)
+        .auth('user1@email.com', 'password1');
+
+      const res3 = await request(app)
+        .get(`/v1/fragments/${fragment_id}.txt`)
+        .auth('user1@email.com', 'password1');
+
+      expect(res1.statusCode).toBe(200);
+      expect(res1.get('Content-Type').includes('text/html')).toBe(true);
+      expect(res2.statusCode).toBe(200);
+      expect(res2.get('Content-Type').includes('text/markdown')).toBe(true);
+      expect(res3.statusCode).toBe(200);
+      expect(res3.get('Content-Type').includes('text/plain')).toBe(true);
+    });
+
+    test('Invalid mime_type with extension error', async () => {
+      const invalidExt = 'invalid';
+      const get_res = await request(app)
+        .get(`/v1/fragments/id.${invalidExt}`)
+        .auth('user1@email.com', 'password1');
+
+      expect(get_res.statusCode).toBe(404);
+      expect(get_res.body.error.message).toBe(`Invalid mime_type with extension .${invalidExt}`);
+    });
   });
-  test('should be able to convert text/markdown to .html, .md, .txt', async () => {
-    const markdown = `# How run this tool`;
 
-    const post_res = await request(app)
-      .post('/v1/fragments')
-      .send(markdown)
-      .set('Content-Type', 'text/markdown')
-      .auth('user1@email.com', 'password1');
+  describe('convert Image', () => {
+    test('Should be able to convert png to jpg', async () => {
+      // Get the absolute path to the image file
+      const imagePath = path.join(__dirname, '../integration/cat.png');
 
-    const { id: fragment_id } = post_res.body.fragment;
+      // Read the image file as a Buffer
+      const catPNG = fs.readFileSync(imagePath);
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send(catPNG)
+        .set('Content-Type', 'image/png')
+        .auth('user1@email.com', 'password1');
 
-    const res1 = await request(app)
-      .get(`/v1/fragments/${fragment_id}.html`)
-      .auth('user1@email.com', 'password1');
+      const { id: fragment_id } = post_res.body.fragment;
 
-    const res2 = await request(app)
-      .get(`/v1/fragments/${fragment_id}.md`)
-      .auth('user1@email.com', 'password1');
+      const get_res = await request(app)
+        .get(`/v1/fragments/${fragment_id}.jpg`)
+        .auth('user1@email.com', 'password1');
 
-    const res3 = await request(app)
-      .get(`/v1/fragments/${fragment_id}.txt`)
-      .auth('user1@email.com', 'password1');
+      expect(get_res.statusCode).toBe(200);
+    });
 
-    expect(res1.statusCode).toBe(200);
-    expect(res1.get('Content-Type').includes('text/html')).toBe(true);
-    expect(res2.statusCode).toBe(200);
-    expect(res2.get('Content-Type').includes('text/markdown')).toBe(true);
-    expect(res3.statusCode).toBe(200);
-    expect(res3.get('Content-Type').includes('text/plain')).toBe(true);
+    test('Should not be able to convert from txt to jpg', async () => {
+      const text = `How run this tool`;
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send(text)
+        .set('Content-Type', 'text/plain')
+        .auth('user1@email.com', 'password1');
+
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const get_res = await request(app)
+        .get(`/v1/fragments/${fragment_id}.jpg`)
+        .auth('user1@email.com', 'password1');
+
+      expect(get_res.statusCode).toBe(400);
+      expect(get_res.body.error.message).toBe('Can\'t convert "text/plain" to ".jpg');
+    });
+
+    test('convert json to txt', async () => {
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send('{"fragment": "This is a fragment"}')
+        .set('Content-Type', 'application/json')
+        .auth('user1@email.com', 'password1');
+
+      console.log(post_res.body);
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const res = await request(app)
+        .get(`/v1/fragments/${fragment_id}.txt`)
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(200);
+    });
   });
 });

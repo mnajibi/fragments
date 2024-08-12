@@ -27,6 +27,9 @@ LABEL description="Fragments node.js microservice"
 # Use /app as our working directory
 WORKDIR /app
 
+# Create the required directory for Apache if it doesn't exist
+RUN mkdir -p /usr/local/apache2/htdocs/
+
 # Copy application source code
 COPY --chown=node:node src/ src/
 COPY --chown=node:node ./tests/.htpasswd ./tests/.htpasswd
@@ -47,4 +50,4 @@ HEALTHCHECK --interval=15s --timeout=30s --start-period=5s --retries=3 \
 EXPOSE ${PORT}
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "src/index.js"]

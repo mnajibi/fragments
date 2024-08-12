@@ -9,7 +9,7 @@ module.exports.putById = async (req, res) => {
     const fragment = await Fragment.byId(ownerId, id);
 
     if (!fragment) {
-      return res.status(404).json(createErrorResponse(404, `Fragment ${id} not found  `));
+      return res.status(404).json(createErrorResponse(404, `Fragment ${id} not found`));
     }
     if (fragment.mimeType !== req.get('Content-Type')) {
       logger.warn(`${req.get('Content-Type')} can't be changed after created`);
