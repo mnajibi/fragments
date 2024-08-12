@@ -42,4 +42,8 @@ router.post('/fragments', rawBody(), post);
 const deleteController = require('./delete');
 router.delete('/fragments/:id', deleteController);
 
+// PUT
+const { putById } = require('./put');
+router.put('/fragments/:id', rawBody(), putById);
+
 module.exports = router;
