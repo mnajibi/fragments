@@ -35,7 +35,12 @@ module.exports.getById = async (req, res) => {
 
   // get mime type from id.ext
   const mime_type = mime.lookup(ext);
-
+  if (ext && !mime_type) {
+    logger.error(`Invalid mime_type with extension ${ext}`);
+    return res
+      .status(404)
+      .json(createErrorResponse(404, `Invalid mime_type with extension ${ext}`));
+  }
   try {
     const fragment = await Fragment.byId(ownerId, id);
     if (!fragment) {
@@ -54,7 +59,7 @@ module.exports.getById = async (req, res) => {
     return res.status(200).send(fragmentData);
   } catch (err) {
     logger.error({ err }, `Error getting fragment with id ${id}`);
-    if (err.code === 404) {
+    if (err.code === 404 || err.code === 400) {
       return res.status(err.code).json(createErrorResponse(err.status, err.message));
     }
     res.status(500).json(createErrorResponse(500, err.message));

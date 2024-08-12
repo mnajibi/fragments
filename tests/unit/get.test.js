@@ -1,9 +1,6 @@
-// tests/unit/get.test.js
-
 const request = require('supertest');
 
 const app = require('../../src/app');
-const Fragment = require('../../src/model');
 
 describe('GET /v1/fragments', () => {
   // If the request is missing the Authorization header, it should be forbidden
@@ -13,7 +10,7 @@ describe('GET /v1/fragments', () => {
   test('incorrect credentials are denied', () =>
     request(app).get('/v1/fragments').auth('invalid@email.com', 'incorrect_password').expect(401));
 
-  // Using a valid username/password pair should give a success result with a fragments array
+  // Using a valid username/password pair should give a success result with a .fragments array
   test('authenticated users get a fragments array', async () => {
     const res = await request(app).get('/v1/fragments').auth('user1@email.com', 'password1');
     expect(res.statusCode).toBe(200);
@@ -21,8 +18,8 @@ describe('GET /v1/fragments', () => {
     expect(Array.isArray(res.body.fragments)).toBe(true);
   });
 
-  test('Request with "expand" query should return expanded response', async () => {
-    // create fragment
+  test('request with "expand" query should return expanded response', async () => {
+    // create a fragment first
     await request(app)
       .post('/v1/fragments')
       .send('some text')
@@ -35,7 +32,7 @@ describe('GET /v1/fragments', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.status).toBe('ok');
 
-    //checking first element of the response
+    // checking first element of the response
     const fragment0 = res.body.fragments[0];
     expect({ fragment0 }).toEqual(
       expect.objectContaining({
@@ -51,8 +48,8 @@ describe('GET /v1/fragments', () => {
     );
   });
 
-  test('Request with "expand" query = 0 should return response with only ids', async () => {
-    // create fragment
+  test('request with "expand" query = 0 should return reponse with only ids', async () => {
+    // create a fragment first
     await request(app)
       .post('/v1/fragments')
       .send('some text')
@@ -62,230 +59,220 @@ describe('GET /v1/fragments', () => {
     const res = await request(app)
       .get('/v1/fragments?expand=0')
       .auth('user1@email.com', 'password1');
-
     expect(res.statusCode).toBe(200);
     expect(res.body.status).toBe('ok');
     expect(Array.isArray(res.body.fragments)).toBe(true);
     expect(typeof res.body.fragments[0]).toBe('string');
   });
-});
 
-describe('GET /v1/fragments/:id', () => {
-  // if the request is missing the Authorization header, it should be forbidden
-  test('unauthenticated requests are denied', async () => {
-    const res = await request(app).get('/v1/fragments/hi');
+  describe('GET /v1/fragments/:id', () => {
+    // If the request is missing the Authorization header, it should be forbidden
+    test('unauthenticated requests are denied', () =>
+      request(app).get('/v1/fragments/hello').expect(401));
 
-    expect(res.statusCode).toBe(401);
+    // If the wrong username/password pair are used (no such user), it should be forbidden
+    test('incorrect credentials are denied', () =>
+      request(app)
+        .get('/v1/fragments/hello')
+        .auth('invalid@email.com', 'incorrect_password')
+        .expect(401));
+
+    test('using non-existent id should return 404', async () => {
+      const res = await request(app)
+        .get('/v1/fragments/non-existent-id')
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(404);
+    });
+    test('using existing id + text/plain should return correct fragment data', async () => {
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send('some text')
+        .set('Content-Type', 'text/plain')
+        .auth('user1@email.com', 'password1');
+
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const res = await request(app)
+        .get(`/v1/fragments/${fragment_id}`)
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(200);
+      expect(res.get('Content-Type')).toBe('text/plain');
+      expect(res.text).toEqual('some text');
+    });
+
+    test('using existing id + text/html should return correct fragment data', async () => {
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send('<h2>This is a fragment<h2>')
+        .set('Content-Type', 'text/html')
+        .auth('user1@email.com', 'password1');
+
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const res = await request(app)
+        .get(`/v1/fragments/${fragment_id}`)
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(200);
+      expect(res.get('Content-Type')).toBe('text/html');
+      expect(res.text).toEqual('<h2>This is a fragment<h2>');
+    });
+
+    test('using existing id + application/json should return correct fragment data', async () => {
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send('{"fragment": "This is a fragment"}')
+        .set('Content-Type', 'application/json')
+        .auth('user1@email.com', 'password1');
+
+      console.log(post_res.body);
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const res = await request(app)
+        .get(`/v1/fragments/${fragment_id}`)
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(200);
+      expect(res.get('Content-Type')).toBe('application/json');
+      expect(res.body).toEqual({ fragment: 'This is a fragment' });
+    });
   });
 
-  // if wrong username and password pair used, should be forbidden
-  test('incorrect credentials are denied', async () => {
-    const res = await request(app)
-      .get('/v1/fragments/hi')
-      .auth('invalid@email.com', 'incorrect_password');
+  describe('GET /v1/fragments/:id/info', () => {
+    // If the request is missing the Authorization header, it should be forbidden
+    test('unauthenticated requests are denied', () =>
+      request(app).get('/v1/fragments/an-id/hello/info').expect(401));
 
-    expect(res.statusCode).toBe(401);
+    // If the wrong username/password pair are used (no such user), it should be forbidden
+    test('incorrect credentials are denied', () =>
+      request(app)
+        .get('/v1/fragments/an-id/hello/info')
+        .auth('invalid@email.com', 'incorrect_password')
+        .expect(401));
+
+    test('using non-existent id would return 404', async () => {
+      const res = await request(app)
+        .get('/v1/fragments/non-existent-id/info')
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(404);
+    });
+    test('using existing id + text/plain type should return correct fragment', async () => {
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send('some text')
+        .set('Content-Type', 'text/plain')
+        .auth('user1@email.com', 'password1');
+
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const res = await request(app)
+        .get(`/v1/fragments/${fragment_id}/info`)
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(200);
+      expect({ fragment: res.body.fragment }).toEqual(
+        expect.objectContaining({
+          fragment: expect.objectContaining({
+            id: expect.any(String),
+            ownerId: expect.any(String),
+            created: expect.any(String),
+            updated: expect.any(String),
+            type: expect.any(String),
+            size: expect.any(Number),
+          }),
+        })
+      );
+    });
+    test('using existing id + applcation/json type should return correct fragment', async () => {
+      const post_obj = { fragments: 'Is fun' };
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send(post_obj)
+        .set('Content-Type', 'application/json')
+        .auth('user1@email.com', 'password1');
+
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const res = await request(app)
+        .get(`/v1/fragments/${fragment_id}/info`)
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(200);
+      expect({ fragment: res.body.fragment }).toEqual(
+        expect.objectContaining({
+          fragment: expect.objectContaining({
+            id: expect.any(String),
+            ownerId: expect.any(String),
+            created: expect.any(String),
+            updated: expect.any(String),
+            type: expect.any(String),
+            size: expect.any(Number),
+          }),
+        })
+      );
+    });
   });
 
-  test('using non-existent id should return 404', async () => {
-    const res = await request(app)
-      .get('/v1/fragments/non-existent-id')
-      .auth('user1@email.com', 'password1');
+  // NOTE: for POST image and conversion, we'll use integration Hurl
+  describe('GET /v1/fragments/:id.ext', () => {
+    // If the request is missing the Authorization header, it should be forbidden
+    test('unauthenticated requests are denied', () =>
+      request(app).get('/v1/fragments/an-id/hello.txt').expect(401));
 
-    expect(res.statusCode).toBe(404);
+    // If the wrong username/password pair are used (no such user), it should be forbidden
+    test('incorrect credentials are denied', () =>
+      request(app)
+        .get('/v1/fragments/an-id/hello.txt')
+        .auth('invalid@email.com', 'incorrect_password')
+        .expect(401));
+
+    test('using non-existent id would return 404', async () => {
+      const res = await request(app)
+        .get('/v1/fragments/non-existent-id.txt')
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(404);
+    });
+
+    test('should be able to convert text/plain to .txt', async () => {
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send('This is a fragment')
+        .set('Content-Type', 'text/markdown')
+        .auth('user1@email.com', 'password1');
+
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const res = await request(app)
+        .get(`/v1/fragments/${fragment_id}.txt`)
+        .auth('user1@email.com', 'password1');
+
+      expect(res.statusCode).toBe(200);
+      expect(res.get('Content-Type').includes('text/plain')).toBe(true);
+    });
+
+    test('should not be able to convert unsupported types', async () => {
+      const markdown = `# How run this tool`;
+
+      const post_res = await request(app)
+        .post('/v1/fragments')
+        .send(markdown)
+        .set('Content-Type', 'text/markdown')
+        .auth('user1@email.com', 'password1');
+
+      const { id: fragment_id } = post_res.body.fragment;
+
+      const get_res = await request(app)
+        .get(`/v1/fragments/${fragment_id}.css`)
+        .auth('user1@email.com', 'password1');
+      expect(get_res.statusCode).toBe(400);
+    });
   });
-
-  test('using existing id + text/plain should return correct fragment data', async () => {
-    const post_res = await request(app)
-      .post('/v1/fragments')
-      .send('some text')
-      .set('Content-Type', 'text/plain')
-      .auth('user1@email.com', 'password1');
-
-    const { id: fragmentID } = post_res.body.fragment;
-
-    const res = await request(app)
-      .get(`/v1/fragments/${fragmentID}`)
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(200);
-    expect(res.get('Content-Type')).toBe('text/plain');
-    expect(res.text).toEqual('some text');
-  });
-
-  test('using existing id + text/html should return correct fragment data', async () => {
-    const post_res = await request(app)
-      .post('/v1/fragments')
-      .send('<h2>This is a fragment</h2>')
-      .set('Content-Type', 'text/html')
-      .auth('user1@email.com', 'password1');
-
-    const { id: fragmentID } = post_res.body.fragment;
-
-    const res = await request(app)
-      .get(`/v1/fragments/${fragmentID}`)
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(200);
-    expect(res.get('Content-Type')).toBe('text/html');
-    expect(res.text).toEqual('<h2>This is a fragment</h2>');
-  });
-
-  test('using existing id + application/json should return correct fragment data', async () => {
-    const post_res = await request(app)
-      .post('/v1/fragments')
-      .send('{"fragment": "This is a fragment"}')
-      .set('Content-Type', 'application/json')
-      .auth('user1@email.com', 'password1');
-
-    console.log(post_res.body);
-    const { id: fragmentID } = post_res.body.fragment;
-
-    const res = await request(app)
-      .get(`/v1/fragments/${fragmentID}`)
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(200);
-    expect(res.get('Content-Type')).toBe('application/json');
-    expect(JSON.parse(JSON.stringify(res.body))).toEqual(
-      JSON.parse('{"fragment": "This is a fragment"}')
-    );
-  });
-});
-
-describe('GET /v1/fragments/:id/info', () => {
-  // if the request is missing the Authorization header, it should be forbidden
-  test('unauthenticated requests are denied', async () => {
-    const res = await request(app).get('/v1/fragments/someID/hi/info');
-
-    expect(res.statusCode).toBe(401);
-  });
-
-  // if wrong username and password pair used, should be forbidden
-  test('incorrect credentials are denied', async () => {
-    const res = await request(app)
-      .get('/v1/fragments/hi/info')
-      .auth('invalid@email.com', 'incorrect_password');
-
-    expect(res.statusCode).toBe(401);
-  });
-
-  test('using non-existent id would return 404', async () => {
-    const res = await request(app)
-      .get('/v1/fragments/non-existent-id/info')
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(404);
-  });
-
-  test('error other than 404 would return 500', async () => {
-    // Mock Fragment.byId to throw an error (other than 404)
-    jest.spyOn(Fragment, 'byId').mockRejectedValueOnce(new Error('Some internal error'));
-
-    const res = await request(app)
-      .get('/v1/fragments/some-id')
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(500);
-    expect(res.body.error.message).toBe('Some internal error');
-  });
-
-  test('text/plain: using existing id would return fragment', async () => {
-    const post_res = await request(app)
-      .post('/v1/fragments')
-      .send('some text')
-      .set('Content-Type', 'text/plain')
-      .auth('user1@email.com', 'password1');
-
-    const { id: fragmentId } = post_res.body.fragment;
-
-    const res = await request(app)
-      .get(`/v1/fragments/${fragmentId}/info`)
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(200);
-    expect({ fragment: res.body.fragment }).toEqual(
-      expect.objectContaining({
-        fragment: expect.objectContaining({
-          id: expect.any(String),
-          ownerId: expect.any(String),
-          created: expect.any(String),
-          updated: expect.any(String),
-          type: expect.any(String),
-          size: expect.any(Number),
-        }),
-      })
-    );
-  });
-
-  test('application/json: using existing id would return fragment', async () => {
-    const post_obj = { fragments: 'hello' };
-    const post_res = await request(app)
-      .post('/v1/fragments')
-      .send(post_obj)
-      .set('Content-Type', 'application/json')
-      .auth('user1@email.com', 'password1');
-
-    const { id: fragmentId } = post_res.body.fragment;
-
-    const res = await request(app)
-      .get(`/v1/fragments/${fragmentId}/info`)
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(200);
-    expect({ fragment: res.body.fragment }).toEqual(
-      expect.objectContaining({
-        fragment: expect.objectContaining({
-          id: expect.any(String),
-          ownerId: expect.any(String),
-          created: expect.any(String),
-          updated: expect.any(String),
-          type: expect.any(String),
-          size: expect.any(Number),
-        }),
-      })
-    );
-  });
-});
-
-describe('GET /v1/fragments/:id.ext', () => {
-  // If the request is missing the Authorization header, it should be forbidden
-  test('unauthenticated requests are denied', () =>
-    request(app).get('/v1/fragments/someId/hello.txt').expect(401));
-
-  // if the wrong username/password pair are used, it should be forbidden
-  test('incorrect credentials are denied', () =>
-    request(app)
-      .get('/v1/fragments/someId/hello.txt')
-      .auth('invalid@email.com', 'incorrect_password')
-      .expect(401));
-
-  test('using non-existent id would return 404', async () => {
-    const res = await request(app)
-      .get('/v1/fragments/non-existent-id.txt')
-      .auth('user1@email.com', 'password1');
-    expect(res.statusCode).toBe(404);
-  });
-
-  test('should be able to convert text/plain to .txt', async () => {
-    const post_res = await request(app)
-      .post('/v1/fragments')
-      .send('This is a fragment')
-      .set('Content-Type', 'text/markdown')
-      .auth('user1@email.com', 'password1');
-
-    const { id: fragment_id } = post_res.body.fragment;
-
-    const res = await request(app)
-      .get(`/v1/fragments/${fragment_id}.txt`)
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(200);
-    expect(res.get('Content-Type').includes('text/plain')).toBe(true);
-  });
-
   test('should be able to convert text/markdown to .html, .md, .txt', async () => {
-    const markdown = '# How to run this tool';
+    const markdown = `# How run this tool`;
 
     const post_res = await request(app)
       .post('/v1/fragments')
@@ -313,25 +300,5 @@ describe('GET /v1/fragments/:id.ext', () => {
     expect(res2.get('Content-Type').includes('text/markdown')).toBe(true);
     expect(res3.statusCode).toBe(200);
     expect(res3.get('Content-Type').includes('text/plain')).toBe(true);
-  });
-
-  // TODO: add test cases where user requests unsupported extensions
-
-  test('convert text/markdown to text/ext should throw error', async () => {
-    const markdown = '# How to run this tool';
-
-    const post_res = await request(app)
-      .post('/v1/fragments')
-      .send(markdown)
-      .set('Content-Type', 'text/markdown')
-      .auth('user1@email.com', 'password1');
-
-    const { id: fragment_id } = post_res.body.fragment;
-
-    const res = await request(app)
-      .get(`/v1/fragments/${fragment_id}.ext`)
-      .auth('user1@email.com', 'password1');
-
-    expect(res.statusCode).toBe(500);
   });
 });

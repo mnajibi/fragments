@@ -25,12 +25,6 @@ class Fragment {
     if (!(type && ownerId)) {
       throw new Error("missing 'ownerId' and 'type', 'ownerId' and 'type' are required");
     }
-    if (!ownerId) {
-      throw new Error("missing 'ownerId', 'ownerId' is required");
-    }
-    if (!type) {
-      throw new Error("missing 'type', 'type' is required");
-    }
     if (!Fragment.isSupportedType(type)) {
       throw new Error(`${type} is not supported`);
     }
@@ -167,7 +161,9 @@ class Fragment {
   convertBuffer(extension, buffer) {
     const is_convertible = VALID_CONVERSION_EXTENSIONS[this.mimeType].includes(extension);
     if (!is_convertible) {
-      throw new Error(`Can't convert "${this.type}" to "${this.to_mime_type}`);
+      const error = new Error(`Can't convert "${this.type}" to "${extension}`);
+      error.code = 400;
+      throw error;
     }
 
     // same type no need to convert
@@ -179,7 +175,7 @@ class Fragment {
 
     let result = buffer;
     const md = new MarkdownIt();
-    switch (this.type) {
+    switch (this.mimeType) {
       case TYPES.TEXT_MARKDOWN:
         if (extension === EXTENSIONS.HTML) {
           result = md.render(buffer.toString());
@@ -211,7 +207,7 @@ class Fragment {
         }
         break;
     }
-    logger.info(`Converted fragment ${this.id}'s data "${this.type}" to "${this.to_mime_type}`);
+    logger.info(`Converted fragment ${this.id}'s data "${this.type}" to "${extension}`);
     return result;
   }
 }

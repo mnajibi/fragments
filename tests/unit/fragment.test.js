@@ -31,7 +31,7 @@ describe('Fragment class', () => {
     });
 
     test('ownerId is required', () => {
-      expect(() => new Fragment({ type: 'text/plain', size: 1 })).toThrow();
+      expect(() => new Fragment({ id: 'id', type: 'text/plain', size: 1 })).toThrow();
     });
 
     test('type is required', () => {
