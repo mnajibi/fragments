@@ -18,6 +18,18 @@
       "essential": true,
       "environment": [
         {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "AWS_S3_BUCKET_NAME",
+          "value": "mnajibi-fragments"
+        },
+        {
+          "name": "AWS_DYNAMODB_TABLE_NAME",
+          "value": "fragments"
+        },
+        {
           "name": "PORT",
           "value": "8080"
         }
